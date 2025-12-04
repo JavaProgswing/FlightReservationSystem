@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flight App — Login / Register</title>
+    <link rel="stylesheet" href="style.css" />
+
+
+  </head>
+
+  <body>
+    <main class="container">
+      <div class="header">
+        <h1>✈️ Flight Reservation</h1>
+        <button id="btnSettings" class="settings-btn" title="Open Settings">
+          ⚙
+        </button>
+      </div>
+
+      <section class="card">
+        <div class="tabs">
+          <button class="tab active" data-tab="loginTab">Login</button>
+          <button class="tab" data-tab="registerTab">Register</button>
+        </div>
+
+        <div id="loginTab" class="tab-content active">
+          <form id="loginForm">
+            <label
+              ><input name="username" required placeholder="Username"
+            /></label>
+            <label
+              ><input
+                name="password"
+                type="password"
+                required
+                placeholder="Password"
+            /></label>
+            <button type="submit">Continue</button>
+          </form>
+        </div>
+
+        <div id="registerTab" class="tab-content">
+          <form id="registerForm">
+            <label
+              ><input name="username" required placeholder="Username"
+            /></label>
+            <label
+              ><input name="email" type="email" required placeholder="Email"
+            /></label>
+            <label
+              ><input
+                name="password"
+                type="password"
+                required
+                placeholder="Password"
+            /></label>
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+      </section>
+
+      <div id="msg" class="msg"></div>
+    </main>
+
+    <canvas id="ambientCanvas"></canvas>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-header">
+        <h3>⚙ Settings</h3>
+        <button id="themeToggle" class="theme-btn" title="Toggle Theme">
+          🌙
+        </button>
+      </div>
+
+      <div class="section">
+        <label>Name <input id="profileName" type="text" /></label>
+        <label>Date of Birth <input id="profileDob" type="date" /></label>
+        <button id="saveProfile">Save Profile</button>
+        <!-- <button id="btnLogout" class="logout">Logout</button> -->
+      </div>
+    </div>
+
+    <div id="settingsBackdrop" class="backdrop hidden"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+      // --- LOGIN ---
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const f = Object.fromEntries(new FormData(e.target));
+        localStorage.setItem("username", f.username);
+        try {
+          const res = await apiLogin(f.username, f.password);
+          msg.textContent = "✅ Logged in — redirecting...";
+          await redirectByRole(res.token);
+        } catch (err) {
+          msg.textContent = err.message || "Login failed ❌";
+        }
+      });
+
+      // --- REGISTER ---
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const f = Object.fromEntries(new FormData(e.target));
+        localStorage.setItem("username", f.username);
+        try {
+          const res = await apiRegister(f.username, f.email, f.password);
+          msg.textContent = "✅ Registered — redirecting...";
+          await redirectByRole(res.token);
+        } catch (err) {
+          msg.textContent = err.message || "Register failed ❌";
+        }
+      });
+
+      // --- TAB SWITCHING ---
+      document.querySelectorAll(".tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tab")
+            .forEach((b) => b.classList.remove("active"));
+          document
+            .querySelectorAll(".tab-content")
+            .forEach((c) => c.classList.remove("active"));
+          btn.classList.add("active");
+          document.getElementById(btn.dataset.tab).classList.add("active");
+        });
+      });
+
+      // --- ANIMATION ---
+      anime({
+        targets: "h1, .card",
+        opacity: [0, 1],
+        translateY: [25, 0],
+        duration: 900,
+        easing: "easeOutExpo",
+      });
+
+      // --- AMBIENT PARTICLES ---
+      const canvas = document.getElementById("ambientCanvas");
+      const ctx = canvas.getContext("2d");
+      const resizeCanvas = () => {
+        canvas.width = innerWidth;
+        canvas.height = innerHeight;
+      };
+      resizeCanvas();
+      addEventListener("resize", resizeCanvas);
+
+      const particles = Array.from({ length: 60 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 2 + 1,
+        dx: (Math.random() - 0.5) * 0.6,
+        dy: (Math.random() - 0.5) * 0.6,
+      }));
+
+      function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        for (let p of particles) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          p.x += p.dx;
+          p.y += p.dy;
+          if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+          if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+        }
+        requestAnimationFrame(animateParticles);
+      }
+      animateParticles();
+
+      // --- SETTINGS PANEL ---
+      const panel = document.getElementById("settingsPanel");
+      const backdrop = document.getElementById("settingsBackdrop");
+
+      btnSettings.addEventListener("click", () => {
+        panel.classList.remove("hidden");
+        backdrop.classList.remove("hidden");
+        anime({
+          targets: "#settingsPanel",
+          right: ["-350px", "0"],
+          duration: 500,
+          easing: "easeOutExpo",
+        });
+      });
+
+      backdrop.addEventListener("click", () => {
+        anime({
+          targets: "#settingsPanel",
+          right: ["0", "-350px"],
+          duration: 500,
+          easing: "easeInExpo",
+          complete: () => panel.classList.add("hidden"),
+        });
+        backdrop.classList.add("hidden");
+      });
+
+      // --- THEME TOGGLE ---
+      if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark");
+        themeToggle.textContent = "☀️";
+      }
+
+      themeToggle.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        const dark = document.body.classList.contains("dark");
+        localStorage.setItem("theme", dark ? "dark" : "light");
+        themeToggle.textContent = dark ? "☀️" : "🌙";
+      });
+
+      // --- PROFILE SAVE ---
+      if (localStorage.getItem("profileName"))
+        profileName.value = localStorage.getItem("profileName");
+      if (localStorage.getItem("profileDob"))
+        profileDob.value = localStorage.getItem("profileDob");
+      saveProfile.addEventListener("click", () => {
+        localStorage.setItem("profileName", profileName.value);
+        localStorage.setItem("profileDob", profileDob.value);
+        alert("✅ Profile Saved!");
+      });
+
+      // --- LOGOUT ---
+      // btnLogout.addEventListener("click", () => {
+      //   localStorage.removeItem("flight_token");
+      //   location.href = "index.html";
+      // });
+    </script>
+  </body>
+</html>
