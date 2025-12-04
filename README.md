@@ -37,14 +37,20 @@ Please ensure the Java backend is started and listening on port 8080 before you 
 *   **Booking History**: View and cancel your bookings.
 *   **Dark Mode**: Toggle between light and dark themes.
 
-## 📸 Screenshots
+
+## 📸 Mockup Screenshots
 
 ### Login Page
-![Login Page](login_page_1764854701701.png)
+![Login Page](images/login_page.png)
 
 ### User Dashboard
-![User Dashboard](user_dashboard_1764855280760.png)
+![User Dashboard](images/user_dashboard.png)
 
 ### Admin Dashboard
-![Admin Dashboard](admin_dashboard_1764855347818.png)
+![Admin Dashboard](images/admin_dashboard.png)
+
+## 🔗 Backend Repository
+
+The backend code for this project can be found here:
+[https://github.com/JavaProgswing/flight-server](https://github.com/JavaProgswing/flight-server)
 
